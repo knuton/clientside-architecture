@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Chaplin: Application architecture on top of Backbone.js</title>
+<style>
+body { margin: auto; max-width: 45em; line-height: 1.5; font-family: sans-serif; }
+</style>
+</head>
+<body>
+  
+<h1>Chaplin: Application architecture on top of Backbone.js</h1>
+
+<h2>What is an application?</h2>
+
+<p>Let us start with a look on web applications from a birds-eye view. Rather than defining what web applications are and what <a href="http://petelepage.com/blog/2011/11/building-a-more-app-y-web/">distinguishes them from normal web sites</a>, let’s just collect some characteristics of such interfaces.
+
+<p>First, an application typically consists of several screens with specific transitions between them. A screen often consists of several parts or even independent views. From a technical point of view, modules of the application depend on each other and communicate with each other.
+
+<p>Usually a lot of asynchronous input and output happens. On user interaction, data is often fetching from remote servers and sent back to save changes.
+Since the rise of the Ajax paradigm, I/O should not block the user interface and should not bother the user.
+
+<p>Recent web-apps are also mashups of several services. It’s common that an application communicates with several APIs using HTTP, Websockets etc. Third-party scripts and external Web services play an important role nowadays. For performance reasons, these modules should be loaded on-demand.
+
+<p>This brainstorming about the nature of already tells a lot about the requirements of JavaScript applications. When evaluating libraries and tools for making JavaScript applications, we might bear these characteristics in mind.
+
+[The “Todo List Example” is not such an app]
+
+<h2>Plenty of questions, plenty of answers</h2>
+
+<p>Developing JavaScript applications has never been easier as it is today. There are mature open-source libraries and tools which focus on different aspects. Virtually every day new libraries and architectures pop up. While this gold rush brings innovation and diversity, it has its downsides.</p>
+
+<p>First, it’s difficult for developers to pick a solution which fits their needs. Second, JavaScript application frameworks only share few conventions and standards. For example, they might have their own interpretation of classic software patterns like Model View controller. Third, you’re kind of trapped after you’ve chosen a development stack. Migrating to another library or architectural approach often means rewriting the application from scratch.
+
+<p>This is also problematic from a business perspective. If every JavaScript application is a beautiful flower, it’s hard to find a developer which is familiar with your specific architecture and toolchain and show them the ropes in a reasonable amount of time.
+
+<h2>Filling your toolbox</h2>
+
+<p>When you start to develop a JavaScript application, you need to chose existing libraries and tools to build upon. This is an incomplete list of tasks you probably have to find solutions for:
+
+<ul>
+<li>DOM Scripting and HTML Templating, e.g. jQuery, Mustache</li>
+<li>Input/Output and API communication, e.g. Ajax, JSONP, Websockets</li>
+<li>Client-side data persistence, e.g. localStorage, IndexedDB, HTML5 History</li>
+</ul>
+
+<ul>
+<li>Overall application structure, e.g. Model View Controller</li>
+<li>Modularization and dependancy management, e.g. AMD, Require.JS</li>
+<li>URL routing and browser history management</li>
+<li>Data binding, e.g. model-view-binding</li>
+</ul>
+
+<ul>
+<li>Meta-languages and precompilers, e.g. CoffeeScript</li>
+<li>Object-oriented and functional programming, e.g. pseudo-classical inheritance</li>
+<li>Lints and other code quality tools, e.g. JSLint, JSHint</li>
+</ul>
+
+<ul>
+<li>Building and packaging, e.g. Brunch</li>
+<li>Unit and integration testing, e.g. Jasmine, CasperJS</li>
+<li>Documentation, e.g. JSDoc</li>
+</ul>
+
+<p>Of course not every application will need to find an answer to each of these questions. Most full-stack application framework provide built-in solutions for several of these tasks. As an alternative, you might combine smaller libraries, tools and patterns yourself to cover all relevant tasks.</p>
+
+<h2>Introducing Backbone.js</h2>
+
+<p>This article will focus on Backbone.js, a library which aims to structure JavaScript applications and accelerate their development. As we will see, it only covers some of the fields listed above. Nevertheless Backbone includes some great and valuable patterns without limiting flexibility.
+
+<p><a href="http://backbonejs.org/">Backbone.js</a> is simple and small library. The current version is roughly 1.400 lines of JavaScript code, which boils down to a file size of 5.6 KB when compressed. Although Backbone is quite young, it’s popularity and stability is remarkable. It is used by big players like LinkedIn, Groupon, Foursquare and 37Signals. It’s free and open-source, and there’s a vibrant community evolving the library on <a href="github.com/documentcloud/backbonejs">Github</a>. As a result, the code has a decent quality, is unit-tested and field-tested alike.
+
+<p>As a hard dependancy, Backbone requires <a href="http://documentcloud.github.com/underscore/">Underscore</a>, a small “utility belt” with helper methods for working with objects, lists and functions. In addition, Backbone is used in conjunction with jQuery as DOM scripting library, and a HTML templating engine of your choice (_.template, Mustache, Handlebars etc.)
+
+<h2>Short introduction to Backbone.js</h2>
+
+<p>Backbone basically introduces three main concepts:
+
+<ul>
+<li><strong>Models</strong> fetch, process and store the raw data</li>
+<li><strong>Views</strong> render data and provide a user interface</li>
+<li><strong>Router and History</strong> change, save and restore application state using URLs</li>
+</ul>
+
+<p>So the key point of Backbone is a <strong>separation of two concerns</strong>: <code>Model</code> objects hold the data, while <code>Views</code> create a user interface to interact with this data. That’s basically all Backbone.js can do for you, but it’s much, so let’s have a deeper look into these patterns.
+
+<p>Backbone consists of just six classes and mixins. Four of them are typically used directly. The remaining two are used internally, but turn out to be highly valuable, as we will later see.
+
+<h2>Events: Basis for an event-driven architecture</h2>
+
+<p><code>Events</code> is an internal mixin which is included by all other Backbone classes. It’s mentioned here first because it provides Backbone’s key feature: dispatching and handling custom events on arbitrary objects. In Backbone, application modules observe other modules by listening to their events.
+
+<p>The mixin consists of three methods: <code>on</code> to register a handler function for an event, <code>off</code> to remove a handler and <code>trigger</code> to dispatch a custom event. By including <code>Backbone.Events</code>, these methods are available on all Backbone classes. If you’re familiar with DOM event handling, you might recognize this pattern from libraries like jQuery or Prototype.
+
+<h2>Model: Data processing</h2>
+
+<p>Model objects hold some raw data. They provide an interface to read, process and alter the data. They are also responsible for reading the data from and writing it to a storage solution. Typically, models synchronize with web servers using RESTful HTTP and JSON.
+
+<p>The key feature of models is the <code>attributes</code> hash, which is the internal data store. For reading an attribute value, use the <code>get()</code> method, for changing the value directly, use the <code>set()</code>. Attribute changes will fire <code>change</code> events.
+
+<p>…
+
+<pre>
+var Car = Backbone.Model.extend();
+var car = new Car({
+  name: 'DeLorean DMC-12'
+});
+alert( car.get('name') );
+</pre>
+
+<h2>Collection: Lists of models</h2>
+
+<p>Collections are lists of models. Under the hood, they use a normal array to store the objects. But a collection offers a variety of convenience methods for iteration, searching, filtering and sorting. When a collection is changed, it triggers <code>add</code>, <code>remove</code> or <code>reset</code> events so another module can observe the changes. Like a model, a collection may fill itself by fetching a list of models as JSON from a remote server. 
+
+<h2>View: Rendering data, building the UI</h2>
+
+<p>Views are responsible for composing the user interface. A view typically holds a DOM element, renders some model data into HTML in order to display it on the screen. For this purpose, a view has a reference to a model or collection.
+
+<p>Views handle user input events which occur in the DOM subtree it manages. For example, a view might display a button and handle clicks on the button. This may include invoking model methods, change model attributes or triggering events.
+
+<p>Views moderate between the HTML/CSS user interface visible on the screen and the models which hold the raw data. The most interesting part here is <em>model binding</em>. A view might listen for events on its model or collection. This is useful to reflect changes of model attributes. If a model attribute changes, the view is notified and is able to display the new value in the user interface.</p>
+
+<p>Views typically render model data into HTML using a template engine. Given the model attributes are <code>{ name: 'DeLorean DMC-12' }</code> as in the example above, and the template reads <code>&lt;p>{{name}}&lt;/p></code>, the generated HTML would be <code>&lt;p>DeLorean DMC-12&lt;/p></code>.
+
+<p>…
+
+<pre>
+var CarView = Backbone.View.extend({
+  initialize: function () {
+    this.model.on('change:name', this.render, this);
+    },
+  render: function () {
+    this.$el.html('Name: ' + this.model.get('name));
+  }
+});
+
+var carView = new CarView({
+  model: car,
+  el: $('#car')
+});
+carView.render();
+</pre>
+
+<h2>Router and History: URLs represent application state</h2>
+
+<p>A crucial feature of the Web is that most of the web content is addressable by persistent URLs. JavaScript applications may use URLs to save and restore the application state. For example, if the user browses a photo gallery, the URL <var>/users/jane-doe/photos/sunset-on-hawaii/fullview</var> might reflects what the user is currently seeing. This URL may be saved and shared, and there might be downwards-compatible, accessible content behind the address. When someone directly jumps to this URL, the application starts up and restores the state. 
+
+<p>Backbone provides means to associate URLs with application screens: A Router consists of URL patterns and methods which are called if these patterns match against the current URL. In these router methods, you might put the code which actually creates some models and views in order show the requested data.
+
+<p>URLs play an important role in Backbone applications, and routers might help you to structure your application on a higher level. If you want transition to another screen in your application, you just tell tell Backbone to navigate to the corresponding URL. Several routers are a good technique to divide your application into addressable screens.
+
+<p>The actual workhorse behind the router is Backbone.History/Backbone.history. This piece of code observes URL changes and dispatches router methods. It can also change the URL programatically without leaving the application. Under the hood, HTML5 History (pushState, popstate events) are used with a hash URL fallback (location.hash, hashchange events).
+
+<h2>Overview</h2>
+
+<p>This is how the architecture of a lain Backbone application could look like. Disclaimer: This is the personal understanding of the authors, not an official recommendation.</p>
+
+<p><img src="backbone.png" alt=""></p>
+
+<h2>Applications on Top of Backbone</h2>
+
+<p>If you start developing a JavaScript application with Backbone, Backbone is just the beginning. Backbone is minimalistic by intent and does not aim to provide a full-fledged solution. Especially, Backbone provides no clear and flexible patterns to structure your application on a top level.</p>
+
+<p>Although Backbone has models and views, it’s does not follow the classic definition of the Model View Controller (MVC) pattern. Backbone’s concept doesn’t match similar patterns like Model View Presenter (MVP) or Model View View Model (MVVM) either. Other frameworks implement these patterns in a way which matches the original definition better.</p>
+
+<p>Backbone beginners quickly get stuck in a bunch of architectural questions: What’s the best way to implement a specific application logic in Backbone? Backbone offers several patterns out of the box, like an event-driven architecture, model-view-binding, URLs representing application state. Apart from these, Backbone does not provide a “right answer” to common design question. The principle is “there’s more than one way to do it” rather than “convention over configuration”.
+
+<h2>Abstraction Layers for Backbone</h2>
+
+<p>Several extensions came up to address Backbone’s lack of conventions and convenience when building complex applications. Most of them deal with same problems, while their approaches slightly differ. The general idea is to provide an overall application structure above individual models/collections, views and routers.
+  
+<p>The most advanced libraries are <a href="https://github.com/derickbailey/backbone.marionette">Marionette</a> and <a href="https://github.com/walmartlabs/thorax">Thorax</a>. Both are open-source and originate from real-life applications with Backbone. There are several more smaller libraries which focus on specific aspects of application development. For instance, the <a href="https://github.com/tbranyen/backbone.layoutmanager">Layoutmanager</a> addresses nested views and rendering lists. <a href="https://github.com/addyosmani/backbone-aura">Aura<a> is an example for a modularized, event-driven application architecture.
+
+<p>If you plan to build a non-trivial Backbone application, you should not run into the same problems and reinvent the wheel, but chose one of these mature solutions.
+￼￼￼￼
+<h2>Meet Chaplin, an example application architecture using Backbone.js</h2>
+
+<p>In this article, we will describe <a href="https://github.com/moviepilot/chaplin">Chaplin</a>, which is our approach on building large-scale applications using Backbone.js. Chaplin is a solid architecture which was derived from <a href="http://moviepilot.com/">moviepilot.com</a>, a real-world single-page application. By releasing Chaplin as open-source, we would like to document, discuss and improve our application structure.
+
+<p>In constrast to the Backbone extensions named above, Chaplin is not (yet) an external library you can just plug in. It is a set of conventions and some necessary scaffold code.
+  
+<p>The following chapters discuss the problems we faced during the development of several JavaScript applications and the solutions we have found in Chaplin.
+
+<h2>Enforcing conventions and writing readable code</h2>
+
+<p>Every Backbone.js application needs to define where to put the code for creating models and views, fetching data, rendering views, subscribing to events, cleaning up etc. If your application grows to a reasonable amount of modules, you will run into maintainability as well as stability issues if you do not manage to keep your code consistent and non-repetitive.
+
+<p>Backbone’s classes (Model, Collection, View) only provide core functionality and are agnostic of the specific data retrieval, templating and view composition of your application. In Chaplin, our first step to establish conventions was to extend Backbone’s classes. This allowed us to not repeat the same code over and over. For example, while the <code>render</code> method of <code>Backbone.View</code> is empty and has to be defined by yourself, Chaplin’s View class offers a standard way to render the view which is used by almost all views in our application.
+
+<p>We’re writing applications in <a href="http://coffeescript.org/">CoffeeScript</a>, which is a simple meta-language that compiles to plain JavaScript. Alongside with a more readable and easier to type syntax, CoffeeScript provides syntactic sugar for <a href="http://coffeescript.org/#classes">declaring pseudo-classes</a>. By using CoffeeScript, we create larger hierarchies of pseudo-classes. Derived classes may overwrite methods while calling the superclass method without much ado. In addition to classes, we’re using mixins and functional techniques to compose objects.
+
+<h2>Module encapsulation, Mediator and Publish/Subscribe</h2>
+
+<p>For a scalable architecture, it’s considered as crucial to keep modules loosely coupled and carefully craft their dependencies.
+
+<p>In Chaplin, we chose <a href="http://requirejs.org/">RequireJS</a> as a module and dependency manager. In RequireJS, every object is declared using the <a href="https://github.com/amdjs/amdjs-api/wiki/AMD">Asynchronous Module Definition</a> (AMD). A file typically defines a module and includes some other modules. RequireJS loads dependencies on-demand during application runtime, or pre-packages the modules into an application bootstrapper.
+
+<p>This approach has several architectural benefits. It enforces the convention that all modules are encapsuled and can only access the modules they require explicitly. In Chaplin, the RequireJS modules are mostly classes and there is no way to directly access their individual instances.
+
+<p>While direct access between module instances is prevented, we allow modules to communicate with each other in a conventional and more secure way. There’s a central <a href="http://en.wikipedia.org/wiki/Mediator_pattern">Mediator object</a> which implements the <a href="http://en.wikipedia.org/wiki/Publish%E2%80%93subscribe_pattern">Publish/Subscribe pattern</a> (Pub/Sub). Module which do not have a parent-child-relationship should communicate using global Pub/Sub messaging exclusively.
+
+<p>In Chaplin, the mediator also holds central objects which need to be accessible throughout the application, for example the user object.</p>
+
+<h2>Simplify routing and introduce controllers</h2>
+
+<p>The standard Backbone router maps URLs its own methods. This makes it hard to track the application state, implement transitions between screens and clean up after a screen was replaced.
+
+<p>In Chaplin, we did not use the Backbone router at all, but replaced it with our own router. Chaplin’s <code>Router</code> class creates <code>Route</code> objects and registers them on <code>Backbone.history</code>. The actual routes are registered in a separate <code>routes</code> file. In contrast to Backbone’s router,  Chaplin’s router serves a single purpose, it publishes <code>matchRoute</code> events when a route matched.</p>
+
+<p>After we have boiled down routing to merely fire a <code>matchRoute</code> event, we introduced <em>controllers</em>. A controller typically represents one screen (or some similar screens) of the application and contains the code that creates the necessary models and views. It consists of several actions like <code>index</code>, <code>show</code> and <code>edit</code>, for example. A route connects a URL pattern to one of these controller actions. </p>
+
+<h2>Super-structure: ApplicationController and ApplicationView</h2>
+
+<p>There are two top-level modules in place to manage individual controllers and their views.</p>
+
+<p>First, the <code>ApplicationController</code> listens for <code>matchRoute</code> events, starts the corresponding controllers and calls their actions. It is also responsible for tracking the current application state and stopping old controllers.</p>
+
+<p>Second, the <code>ApplicationView</code> is the top-level view manager. It reacts upon changes of the current controller and shows or hides the controller’s main view. In addition, it handles application-wide DOM events, like clicks on internal links.</p>
+
+<h2>Architecture overview</h2>
+
+<p>This diagram overview illustrate the role of the different module application.</p>
+
+<p><img src="architecture.png" alt=""></p>
+
+<p>The Application starts up the core modules, it instantiates the Router, the Mediator and the ApplicationController.
+
+<p>
+
+<p>While this approach isn’t traditional MVC either, it follows the MVC approach of server-side frameworks like Ruby on Rails.</p>
+
+<h2>Memory management</h2>
+
+<p>In JavaScript, there is no explicit way to free the memory occupied by objects which aren’t used any more. Most JavaScript application developers rely on the garbage collector to manage the memory. However, in an event-driven architecture, registering callback handlers creates object references which have to be taken care of.</p>
+
+<p>For example, views often bind to model events while binding the handler to the view instance. When the view is removed from the screen, the handler must also be removed. Otherwise the reference to the handler prevents the garbage collector from wiping the view instance from memory.
+
+<p>Chaplin puts a lot of effort into strict memory management. It standardizes object disposal by requiring a <code>dispose</code> method from every controller, model, collection and view. The core classes of Chaplin allow for automatic disposal. They also provides methods for registering handlers which support automatic disposal. For example, views should use the <code>modelBind</code> method instead of <code>this.model.on</code> directly.
+
+<p>These are just basic, but crucial measures to, to prevent memory leaks and maintain an overall application performance.</p>
+
+<h2>Handling asynchronous dependencies</h2>
+
+Backbone’s own event handling (wrapped) Publish/Subscribe
+Model and collection synchronization:
+Mix in jQuery Deferreds
+More complex finite-state machines (SyncMachine)
+Function wrappers and accumulators
+createDeferredFunction, afterLogin, ensureLogin createAccumulator
+
+<h2>User Authentication</h2>
+SessionController for user management User model instance on the mediator
+Pub/Sub-driven login process: !login, login, !logout, logout events
+ServiceProviders handle the actual login
+Client-side login with OAuth providers like Facebook, Google or Twitter
+
+
+
+</body>
+</html>
