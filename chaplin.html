@@ -11,15 +11,15 @@ body { margin: auto; max-width: 45em; line-height: 1.5; font-family: sans-serif;
   
 <h1>Chaplin: Application architecture on top of Backbone.js</h1>
 
-<h2>What is an application?</h2>
+<h2>What makes a web <em>application</em>?</h2>
 
 <p>Let us start with a look on web applications from a birds-eye view. Rather than defining what web applications are and what <a href="http://petelepage.com/blog/2011/11/building-a-more-app-y-web/">distinguishes them from normal web sites</a>, let’s just collect some characteristics of such interfaces.</p>
 
-<p>First, an application typically consists of several screens with specific transitions between them. A screen often consists of several parts or views. Some of them persist over several screens, while others are replaced. These views often depend on each other and communicate with each other.</p>
+<p>First, an application typically consists of several screens with specific transitions between them. A screen often consists of several parts or views. Some of them persist over several screens, while others are replaced. These views (TODO As this article is in large parts about MVC, the term "view" could be confusing -- what is clearer?) often depend on each other and communicate with each other.</p>
 
-<p>In web applications, usually a lot of asynchronous input and output happens. On user interaction, data is fetched from remote servers and sent back to save changes. Since the rise of the Ajax paradigm, reading and writing data should not block the user interface and should not bother the user.</p>
+<p>In any typical web application a lot of asynchronous input and output happens. As the user interacts with the application, data needs to be fetched from remote servers in order to be displayed. In the same process, some of the user actions may also need to be sent to the same or other servers to be stored persistently. Since the rise of the Ajax paradigm, reading and writing data is expected to not block the user interface and to not bother the user.</p>
 
-<p>Recent web apps are also mashups of several services. It’s common that an application communicates with several APIs using HTTP, Websockets etc. Third-party scripts and external Web services play an important role nowadays. For performance reasons, these services should be loaded on-demand.</p>
+<p>Recent web apps are also mashups of several services. It’s common that an application communicates with several APIs using HTTP, Websockets etc. Third-party scripts and external Web services play an important role nowadays. For swift startup and a light footprint, these services should be loaded on-demand.</p>
 
 <p>These features of web applications already tell a lot about the demands on the internal software architecture. When evaluating libraries and tools for making JavaScript applications, we should bear these characteristics in mind.</p>
 
