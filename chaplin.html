@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
+<meta charset="utf-8">
 <title>Chaplin: Application architecture on top of Backbone.js</title>
 <style>
 body { margin: auto; max-width: 45em; line-height: 1.5; font-family: sans-serif; }
@@ -10,15 +11,15 @@ body { margin: auto; max-width: 45em; line-height: 1.5; font-family: sans-serif;
   
 <h1>Chaplin: Application architecture on top of Backbone.js</h1>
 
-<h2>What is an application?</h2>
+<h2>What makes a web <em>application</em>?</h2>
 
 <p>Let us start with a look on web applications from a birds-eye view. Rather than defining what web applications are and what <a href="http://petelepage.com/blog/2011/11/building-a-more-app-y-web/">distinguishes them from normal web sites</a>, let’s just collect some characteristics of such interfaces.</p>
 
-<p>First, an application typically consists of several screens with specific transitions between them. A screen often consists of several parts or views. Some of them persist over several screens, while others are replaced. These views often depend on each other and communicate with each other.</p>
+<p>First, an application typically consists of several screens with specific transitions between them. A screen often consists of several parts or views. Some of them persist over several screens, while others are replaced. These views (TODO As this article is in large parts about MVC, the term "view" could be confusing -- what is clearer?) often depend on each other and communicate with each other.</p>
 
-<p>In web applications, usually a lot of asynchronous input and output happens. On user interaction, data is fetched from remote servers and sent back to save changes. Since the rise of the Ajax paradigm, reading and writing data should not block the user interface and should not bother the user.</p>
+<p>In any typical web application a lot of asynchronous input and output happens. As the user interacts with the application, data needs to be fetched from remote servers in order to be displayed. In the same process, some of the user actions may also need to be sent to the same or other servers to be stored persistently. Since the rise of the Ajax paradigm, reading and writing data is expected to not block the user interface and to not bother the user.</p>
 
-<p>Recent web apps are also mashups of several services. It’s common that an application communicates with several APIs using HTTP, Websockets etc. Third-party scripts and external Web services play an important role nowadays. For performance reasons, these services should be loaded on-demand.</p>
+<p>Recent web apps are also mashups of several services. It’s common that an application communicates with several APIs using HTTP, Websockets etc. Third-party scripts and external Web services play an important role nowadays. For swift startup and a light footprint, these services should be loaded on-demand.</p>
 
 <p>These features of web applications already tell a lot about the demands on the internal software architecture. When evaluating libraries and tools for making JavaScript applications, we should bear these characteristics in mind.</p>
 
@@ -43,8 +44,8 @@ body { margin: auto; max-width: 45em; line-height: 1.5; font-family: sans-serif;
 </ul>
 
 <ul>
-<li>Overall application structure, e.g. Model View Controller</li>
-<li>Modularization and dependancy management, e.g. AMD, Require.JS</li>
+<li>Overall application structure, e.g. Model View Controller (TODO Wouldn't put MVC as <em>overall</em> application structure. Chaplin exists mainly because MVC is not enough as an overall structure. Maybe this item is more about paradigm than structure?)</li>
+<li>Modularization and dependency management, e.g. AMD, Require.JS</li>
 <li>URL routing and browser history management</li>
 <li>Data binding, e.g. model-view-binding</li>
 </ul>
@@ -58,10 +59,10 @@ body { margin: auto; max-width: 45em; line-height: 1.5; font-family: sans-serif;
 <ul>
 <li>Building and packaging, e.g. Brunch</li>
 <li>Unit and integration testing, e.g. Jasmine, CasperJS</li>
-<li>Documentation, e.g. JSDoc</li>
+<li>Documentation, e.g. JSDoc (TODO Do we want to dive into different paradigms of documenting? It's interesting, but probably too big of an issue to include. JSDoc is not being used or even pursued in the CoffeeCommunity to my knowledge. Docco has some popularity there. I recently started using Sphinx which has basic support for Python-Heredoc-style comments in CoffeeScript.)</li>
 </ul>
 
-<p>Of course not every application will need to find an answer to each of these questions. Most full-stack application framework provide built-in solutions for several of these tasks. As an alternative, you might combine smaller libraries, tools and patterns yourself to cover all relevant tasks.</p>
+<p>Of course not every application will need to find an answer to each of these questions. Most full-stack application frameworks provide built-in solutions for several of these tasks. As an alternative, you might combine smaller libraries, tools and patterns yourself to cover all relevant tasks.</p>
 
 <h2>Introducing Backbone.js</h2>
 
@@ -69,7 +70,7 @@ body { margin: auto; max-width: 45em; line-height: 1.5; font-family: sans-serif;
 
 <p><a href="http://backbonejs.org/">Backbone.js</a> is simple and small library. The current version is roughly 1.400 lines of JavaScript code, which boils down to a file size of 5.6 KB when compressed. Although Backbone is quite young, it’s popularity and stability is remarkable. It is used by big players like LinkedIn, Groupon, Foursquare and 37Signals. It’s free and open-source, and there’s a vibrant community evolving the library on <a href="github.com/documentcloud/backbonejs">Github</a>. As a result, the code has a decent quality, is unit-tested and field-tested alike.</p>
 
-<p>As a hard dependancy, Backbone requires <a href="http://documentcloud.github.com/underscore/">Underscore</a>, a small “utility belt” with helper methods for working with objects, lists and functions. In addition, Backbone is used in conjunction with jQuery as DOM scripting library, and a HTML templating engine of your choice (_.template, Mustache, Handlebars etc.)</p>
+<p>As a hard dependency, Backbone requires <a href="http://documentcloud.github.com/underscore/">Underscore</a>, a small “utility belt” with helper methods for working with objects, lists and functions. In addition, Backbone is used in conjunction with jQuery as DOM scripting library, and a HTML templating engine of your choice (_.template, Mustache, Handlebars etc.)</p>
 
 <h2>Short introduction to Backbone.js</h2>
 
